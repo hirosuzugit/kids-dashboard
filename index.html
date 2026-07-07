@@ -357,6 +357,14 @@
         let currentTab = 'asa';
         let checkedStates = JSON.parse(localStorage.getItem('dashboardTaskStates')) || {};
 
+        // 起動時に既に全部完了しているタブは「お祝い済み」とみなす（リロードのたびに勝手に祝わないため）
+        let celebratedTabs = {};
+        ['asa', 'yoru'].forEach(function (tab) {
+            const tasks = taskData[tab];
+            celebratedTabs[tab] = tasks.length > 0 && tasks.every(function (t) { return checkedStates[t.id]; });
+        });
+        let celebrationTimer = null;
+
         function getTargetDay() {
             const now = new Date();
             const currentDay = now.getDay();
@@ -434,13 +442,26 @@
                 gridEl.appendChild(item);
             });
 
-            if (currentTasks.length > 0 && allChecked) {
+            const isComplete = currentTasks.length > 0 && allChecked;
+
+            if (isComplete && !celebratedTabs[currentTab]) {
+                // 初めて全部そろった瞬間 → 「よくできました！」＋紙吹雪
+                celebratedTabs[currentTab] = true;
                 gridEl.style.display = 'none';
                 congratsEl.style.display = 'block';
                 triggerConfetti();
+                // 紙吹雪が終わるころ（約2秒後）にタスクリスト表示へ戻す（チェックは「できた！」のまま）
+                if (celebrationTimer) clearTimeout(celebrationTimer);
+                celebrationTimer = setTimeout(function () {
+                    congratsEl.style.display = 'none';
+                    gridEl.style.display = 'flex';
+                    celebrationTimer = null;
+                }, 2000);
             } else {
+                // 通常表示（未完了、または お祝い済みで全部できた状態）
                 gridEl.style.display = 'flex';
                 congratsEl.style.display = 'none';
+                if (!isComplete) celebratedTabs[currentTab] = false; // 未完了に戻ったら、次にそろった時また祝う
             }
         }
 

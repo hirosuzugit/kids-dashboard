@@ -146,7 +146,30 @@
             gap: clamp(10px, 1.6vh, 15px);
             max-height: 94vh;
             overflow-y: auto;
+            position: relative;
         }
+
+        /* 右上の「×」＝保存せずに閉じるボタン */
+        .settings-close {
+            position: absolute;
+            top: clamp(8px, 1.4vh, 14px);
+            right: clamp(8px, 1.4vw, 16px);
+            width: clamp(34px, 5vw, 42px);
+            height: clamp(34px, 5vw, 42px);
+            border: none;
+            border-radius: 50%;
+            background: #edf2f7;
+            color: #4a5568;
+            font-size: clamp(1.2rem, 2.6vw, 1.6rem);
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        .settings-close:active { transform: scale(0.92); background: #dde3ea; }
 
         .settings-section {
             display: flex;
@@ -314,6 +337,7 @@
 
     <div id="settings-overlay" class="settings-overlay">
         <div class="settings-panel">
+            <button class="settings-close" onclick="closeSettings()" aria-label="保存せずに閉じる">×</button>
             <div class="settings-section">
                 <strong>📅 カレンダー埋め込み設定</strong>
                 <input type="text" id="input-embed-url" placeholder="Googleカレンダーの「埋め込みコード」またはURLを貼り付け">
@@ -549,6 +573,11 @@
                 document.getElementById(`input-tt-${i}`).value = (timetableData[i] || []).join(',');
             }
             document.getElementById('settings-overlay').style.display = 'flex';
+        }
+
+        // ×ボタン：内容を保存せずに設定画面を閉じる
+        function closeSettings() {
+            document.getElementById('settings-overlay').style.display = 'none';
         }
 
         function saveSettings() {

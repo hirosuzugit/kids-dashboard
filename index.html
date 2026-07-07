@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>おうちダッシュボード（Fire 7用）</title>
+    <title>おうちダッシュボード</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         /*
-          Fire 7（7インチ / 1024x600 / 低解像度）向け調整版
+          レスポンシブ版（Fire 7 / iPad 兼用）
           - サイズはすべて clamp() で可変：CSS上の見かけ幅が1024pxでも約683pxでも画面ぴったりに収まる
           - レイアウトは flex 比率＋ min-height:0 で、はみ出さず・必要なら内側スクロール
-          - iPadなど大きい画面でも上限値まで自然に拡大するので、そのまま使える
+          - 朝＝ライト（白ベース）／夜＝そのまま、のテーマ切替あり
         */
         :root {
             --bg-color: #f0f4f8;
+            --bg-asa: #fff8f0;      /* 朝：白ベースの明るい背景 */
             --panel-bg: #ffffff;
             --text-main: #333333;
             --text-muted: #a0aec0;
@@ -47,7 +48,15 @@
             padding: clamp(6px, 1.4vh, 15px);
             gap: clamp(6px, 1.3vh, 15px);
             overflow: hidden;
+            transition: background-color 0.3s ease;
         }
+
+        /* 朝＝ライトモード（白ベース）／夜＝そのまま */
+        body.theme-asa { background-color: var(--bg-asa); }
+        body.theme-yoru { background-color: var(--bg-color); }
+        /* 朝は背景が白っぽいので、パネルの輪郭をうっすら出す（レイアウトずれ防止に透明ボーダー常設） */
+        .panel { border: 1px solid transparent; }
+        body.theme-asa .panel { border-color: #f3e7d6; }
 
         /* 上部：タブ切り替えヘッダー */
         header {
@@ -170,7 +179,7 @@
             flex: 0 0 auto;
         }
 
-        /* メインレイアウト */
+        /* メインレイアウト：左（じかんわり＋きょうのよてい）／右（タスク） */
         .main-layout {
             display: flex;
             flex: 1;
@@ -201,17 +210,35 @@
             flex: 0 0 auto;
         }
 
-        /* 左側：時間割（7インチでは狭くなりすぎないよう28%に） */
-        .left-column { width: 28%; min-width: 0; }
+        /* じかんわりのタイトルは、曜日を下の行に改行表示 */
+        .timetable-header {
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 2px;
+        }
+        .timetable-day {
+            color: #718096;
+            font-size: clamp(0.7rem, 1.4vw, 1.1rem);
+            font-weight: bold;
+        }
+
+        /* 左カラム：じかんわり（上）＋きょうのよてい（下）を縦に積む */
+        .left-column {
+            width: 33%;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(8px, 1.3vh, 15px);
+            min-height: 0;
+        }
+        .timetable-panel { flex: 1 1 0; min-height: 0; }
         .timetable-list { flex: 1; display: flex; flex-direction: column; gap: clamp(4px, 0.8vh, 8px); overflow-y: auto; min-height: 0; }
         .timetable-item { display: flex; align-items: center; background: #f8fafc; padding: clamp(6px, 1vh, 12px) clamp(8px, 1.1vw, 15px); border-radius: clamp(8px, 1.2vw, 12px); font-size: clamp(0.78rem, 1.7vw, 1.3rem); font-weight: bold; }
         .timetable-num { background: #e2e8f0; color: #4a5568; width: clamp(22px, 3vw, 30px); height: clamp(22px, 3vw, 30px); display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-right: clamp(8px, 1.1vw, 15px); font-size: clamp(0.72rem, 1.4vw, 1.1rem); flex: 0 0 auto; }
 
-        /* 右側 */
-        .right-column { width: 72%; display: flex; flex-direction: column; gap: clamp(8px, 1.3vh, 15px); min-height: 0; }
-
-        /* 右上：カレンダー埋め込みエリア */
-        .timetree-panel { flex: 0 0 auto; height: clamp(90px, 21vh, 180px); }
+        /* きょうのよてい（カレンダー）：左カラムの下段 */
+        .timetree-panel { flex: 1.3 1 0; min-height: 0; }
         .timetree-container { flex: 1; background: #f7fafc; border-radius: clamp(10px, 1.4vw, 14px); overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 0; }
         .timetree-iframe { width: 100%; height: 100%; border: none; }
 
@@ -236,7 +263,13 @@
         .calendar-open-btn .big { font-size: clamp(1rem, 2.6vw, 1.9rem); }
         .calendar-open-btn .small { font-size: clamp(0.68rem, 1.4vw, 0.9rem); opacity: 0.85; }
 
-        /* 右下：タスクリスト */
+        /* 右カラム：タスクリスト（フル） */
+        .right-column {
+            width: 67%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
         .task-panel { flex: 1 1 auto; position: relative; min-height: 0; }
         .congratulations { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; font-size: clamp(1.6rem, 5.5vw, 3.5rem); font-weight: bold; color: var(--success-color); width: 100%; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
@@ -253,7 +286,7 @@
         .task-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: clamp(6px, 1vh, 12px) clamp(12px, 2vw, 25px); border-radius: clamp(12px, 1.8vw, 18px); border: 3px solid transparent; transition: all 0.2s ease; min-height: clamp(34px, 7vh, 65px); }
         .task-item.asa-mode { background-color: var(--asa-bg); }
         .task-item.yoru-mode { background-color: var(--yoru-bg); }
-        .task-text { font-size: clamp(0.95rem, 2.1vw, 1.8rem); font-weight: bold; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+        .task-text { font-size: clamp(0.95rem, 2.1vw, 1.8rem); font-weight: bold; min-width: 0; }
         .task-item.checked { background-color: var(--success-bg) !important; border-color: var(--success-color); }
         .task-item.checked .task-text { color: #27ae60; }
 
@@ -265,7 +298,7 @@
         @keyframes pop { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
     </style>
 </head>
-<body>
+<body class="theme-asa">
 
     <header>
         <div class="tabs">
@@ -302,22 +335,24 @@
     </div>
 
     <div class="main-layout">
-        <div class="panel left-column">
-            <div class="panel-title">
-                <span id="timetable-title">じかんわり</span>
-                <span id="timetable-day" style="color: #718096; font-size: clamp(0.72rem,1.4vw,1.1rem);">(月)</span>
+        <div class="left-column">
+            <div class="panel timetable-panel">
+                <div class="panel-title timetable-header">
+                    <span id="timetable-title">じかんわり</span>
+                    <span id="timetable-day" class="timetable-day">(月ようび)</span>
+                </div>
+                <div id="timetable-list" class="timetable-list"></div>
             </div>
-            <div id="timetable-list" class="timetable-list"></div>
-        </div>
 
-        <div class="right-column">
             <div class="panel timetree-panel">
-                <div class="panel-title">📅 今日のよてい</div>
+                <div class="panel-title">📅 きょうのよてい</div>
                 <div id="timetree-container" class="timetree-container">
                     <div style="color:#718096; text-align:center; padding:10px; font-size:clamp(0.75rem,1.5vw,1rem);">⚙️ 設定からカレンダーの埋め込みURLを入力してください。</div>
                 </div>
             </div>
+        </div>
 
+        <div class="right-column">
             <div class="panel task-panel">
                 <div id="congrats-screen" class="congratulations">🎉 よくできました！ 🎉</div>
                 <div id="task-grid" class="task-grid"></div>
@@ -328,19 +363,26 @@
     <script>
         const taskData = {
             asa: [
-                { id: 'a1', text: 'はみがき' },
-                { id: 'a2', text: 'ハンカチ・ティッシュ' },
-                { id: 'a3', text: 'ランチョンマット' },
-                { id: 'a4', text: 'こうぼう' },
-                { id: 'a5', text: 'すいとう' }
+                { id: 'm1', text: 'トイレにいく' },
+                { id: 'm2', text: '朝ごはんを食べる' },
+                { id: 'm3', text: '着がえをする' },
+                { id: 'm4', text: '歯みがきをする' },
+                { id: 'm5', text: 'ハンカチ・ティッシュをもつ' },
+                { id: 'm6', text: 'ランチョンマットをもつ' },
+                { id: 'm7', text: 'タブレットをもつ' },
+                { id: 'm8', text: 'すいとうをもつ' },
+                { id: 'm9', text: 'こうぼうをかぶる' }
             ],
             yoru: [
-                { id: 'y1', text: 'れんらくちょうを出す' },
-                { id: 'y2', text: 'ハンカチ・ティッシュを出す' },
-                { id: 'y3', text: 'しゅくだい' },
-                { id: 'y4', text: 'タブレットじゅうでん' },
-                { id: 'y5', text: 'えんぴつけずり' },
-                { id: 'y6', text: 'あしたの持ち物かくにん' }
+                { id: 'n1', text: 'れんらくちょうを出す' },
+                { id: 'n2', text: 'ハンカチ・ティッシュを出す' },
+                { id: 'n3', text: 'しゅくだいをする' },
+                { id: 'n4', text: '夜ごはんを食べる' },
+                { id: 'n5', text: 'タブレットをじゅうでんする' },
+                { id: 'n6', text: 'えんぴつをけずる' },
+                { id: 'n7', text: 'あしたの持ちものをじゅんびをする' },
+                { id: 'n8', text: '歯みがきをする' },
+                { id: 'n9', text: 'トイレにいく' }
             ]
         };
 
@@ -365,6 +407,11 @@
         });
         let celebrationTimer = null;
 
+        function applyTheme() {
+            document.body.classList.remove('theme-asa', 'theme-yoru');
+            document.body.classList.add('theme-' + currentTab);
+        }
+
         function getTargetDay() {
             const now = new Date();
             const currentDay = now.getDay();
@@ -377,7 +424,7 @@
             const targetDay = getTargetDay();
             const listEl = document.getElementById('timetable-list');
             listEl.innerHTML = '';
-            document.getElementById('timetable-title').innerText = currentTab === 'asa' ? '☀️ きょうの じかんわり' : '🌙 あしたの じかんわり';
+            document.getElementById('timetable-title').innerText = currentTab === 'asa' ? '☀️ きょうのじかんわり' : '🌙 あしたのじかんわり';
             document.getElementById('timetable-day').innerText = `(${dayLabels[targetDay]}ようび)`;
 
             if (targetDay === 0 || targetDay === 6) {
@@ -532,6 +579,7 @@
         }
 
         function renderAll() {
+            applyTheme();
             renderTimetable();
             renderTasks();
             updateTimeTreeCalendar();
@@ -540,11 +588,12 @@
         // 初回読み込み
         renderAll();
 
-        // --- キオスク用：カレンダーとその日の表示を定期リフレッシュ ---
+        // --- キオスク用：カレンダーを定期リフレッシュ ---
         // 30分ごとにGoogleカレンダーのiframeを再読込（新しい予定を反映＆通信復帰）
         setInterval(updateTimeTreeCalendar, 30 * 60 * 1000);
+
         // 日付が変わったら（＝深夜0時すぎ）ページを丸ごと再読込。
-        //  - 「今日のじかんわり／今日のよてい」が翌日に切り替わる
+        //  - 「今日のじかんわり／よてい」が翌日に切り替わる
         //  - Fireタブレットで長時間つけっぱなしにすると起きる「画面まっ白」問題を毎日リセットできる
         //  （Fully Kiosk の Auto Reload を併用すると、さらに安心です）
         let lastRenderedDay = new Date().getDate();

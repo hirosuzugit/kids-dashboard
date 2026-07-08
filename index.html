@@ -364,7 +364,7 @@
             <div class="panel timetable-panel">
                 <div class="panel-title timetable-header">
                     <span id="timetable-title">じかんわり</span>
-                    <span id="timetable-day" class="timetable-day">(月ようび)</span>
+                    <span id="timetable-day" class="timetable-day">月ようび</span>
                 </div>
                 <div id="timetable-list" class="timetable-list"></div>
             </div>
@@ -411,13 +411,30 @@
             ]
         };
 
+        // ▼▼ GitHubで管理する初期設定。内容を変えたら CONFIG_VERSION の番号も必ず上げる ▼▼
+        //    → 番号が変わると、全端末（PC・Fire）で初期設定が新しい内容に更新される
+        const CONFIG_VERSION = '20260708-1';
+
+        // カレンダーの埋め込みURL（初期値）
+        const DEFAULT_EMBED_URL = 'https://calendar.google.com/calendar/embed?src=d5da5ea048a55dd7324dcf37409cfdf06532c756a1da0bfd5b636fcd2330e76a%40group.calendar.google.com&ctz=Asia%2FTokyo&mode=AGENDA&hl=ja&showTitle=0&showDate=0&showNav=0&showTabs=0&showCalendars=0&showTz=0&showPrint=0';
+
+        // じかんわり（初期値）
         const defaultTimetable = {
-            1: ['こくご', 'さんすう', 'たいいく', 'おんがく', 'ずこう'],
-            2: ['さんすう', 'こくご', 'りか', 'しゃかい', 'どうとく'],
-            3: ['こくご', 'さんすう', 'えいご', 'プログラミング'],
-            4: ['さんすう', 'こくご', 'たいいく', 'りか', 'しゃかい'],
-            5: ['こくご', 'さんすう', 'ずこう', 'ずこう', 'かつどう']
+            1: ['こくご', 'さんすう', 'たいいく（そと）', 'こくご', 'がっかつ'],
+            2: ['どうとく', 'としょ', 'せいかつ', 'こくご', 'さんすう'],
+            3: ['さんすう', 'こくご', 'たいいく（そと）', 'おんがく', 'せいかつ'],
+            4: ['ずこう', 'ずこう', 'さんすう', 'こくご', 'こくご'],
+            5: ['こくご', 'さんすう', 'たいいく（うち）', 'せいかつ', 'おんがく']
         };
+
+        // バージョンが変わったら、全端末で初期設定（カレンダーURL・じかんわり）を更新する。
+        // ※タスクのチェック状態(dashboardTaskStates)は消さない。
+        if (localStorage.getItem('dashboardConfigVersion') !== CONFIG_VERSION) {
+            localStorage.setItem('timetree_embed_url', DEFAULT_EMBED_URL);
+            localStorage.setItem('dashboardTimetableData', JSON.stringify(defaultTimetable));
+            localStorage.setItem('dashboardConfigVersion', CONFIG_VERSION);
+        }
+        // ▲▲ ここまで初期設定 ▲▲
 
         let timetableData = JSON.parse(localStorage.getItem('dashboardTimetableData')) || defaultTimetable;
         const dayLabels = { 0: '日', 1: '月', 2: '火', 3: '水', 4: '木', 5: '金', 6: '土' };
@@ -450,7 +467,7 @@
             const listEl = document.getElementById('timetable-list');
             listEl.innerHTML = '';
             document.getElementById('timetable-title').innerText = currentTab === 'asa' ? '☀️ きょうのじかんわり' : '🌙 あしたのじかんわり';
-            document.getElementById('timetable-day').innerText = `(${dayLabels[targetDay]}ようび)`;
+            document.getElementById('timetable-day').innerText = `${dayLabels[targetDay]}ようび`;
 
             if (targetDay === 0 || targetDay === 6) {
                 listEl.innerHTML = '<div class="timetable-item">おやすみです ＼(^o^)／</div>';
@@ -469,7 +486,7 @@
         //    → 「接続が拒否されました」になるので、代わりにタップで開くボタンを表示する
         //  ・Googleカレンダー等の埋め込み可能URL → これまで通り iframe で表示
         function updateTimeTreeCalendar() {
-            const embedUrl = (localStorage.getItem('timetree_embed_url') || '').trim();
+            const embedUrl = (localStorage.getItem('timetree_embed_url') || DEFAULT_EMBED_URL || '').trim();
             const container = document.getElementById('timetree-container');
 
             if (!embedUrl) {
